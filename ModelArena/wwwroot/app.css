@@ -1,3 +1,11 @@
+/* Ensure full height calculation includes padding and borders */
+.btn:focus,
+.model-select:focus {
+    outline: 2px solid #4f46e5; /* Visible focus ring */
+    outline-offset: 2px;
+}
+
+
 h1:focus {
     outline: none;
 }
@@ -20,9 +28,9 @@ h1:focus {
     color: white;
 }
 
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
-    }
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
@@ -37,114 +45,3 @@ h1:focus {
     text-align: start;
 }
 
-/* Container */
-.container {
-    width: 90%;
-    margin: 0 auto;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #333;
-}
-
-/* Row for chat components */
-.row.chat-container {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-}
-
-/* Individual chat box */
-.col.chat-box {
-    flex: 1;
-    margin: 0 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    border: 1px solid #e1e1e1;
-}
-
-/* Header with model selection */
-.model-chat .header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.model-chat .model-label {
-    margin-right: 10px;
-    font-weight: 600;
-    color: #005a9e;
-}
-
-.model-chat .model-select {
-    flex: 1;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #f3f3f3;
-}
-
-/* Chat history container */
-.chat-history-container {
-    margin-bottom: 15px;
-}
-
-.chat-history {
-    height: 250px;
-    overflow-y: auto;
-    border: 1px solid #d1d1d1;
-    padding: 10px;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-}
-
-/* Chat input area */
-.chat-input {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-    .chat-input .input-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
-    }
-
-    .chat-input .input-box {
-        flex: 1;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        resize: none;
-        font-size: 14px;
-    }
-
-/* Buttons */
-.btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
-}
-
-.btn-primary {
-    background-color: #0078d4;
-    color: #fff;
-}
-
-    .btn-primary:hover {
-        background-color: #005a9e;
-    }
-
-.btn-secondary {
-    background-color: #6c757d;
-    color: #fff;
-}
-
-    .btn-secondary:hover {
-        background-color: #5a6268;
-    }

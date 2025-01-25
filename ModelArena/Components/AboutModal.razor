@@ -1,0 +1,69 @@
+﻿<div class="modal-overlay">
+    <div class="modal">
+        <h2>About Model Arena</h2>
+        <div class="modal-content">
+            <p>Welcome to the <a href="https://github.com/alonf/ModelArena" target="_blank">Model Arena</a> This tool allows you to compare models and test AI interactions.</p>
+
+            <h3>Updating App Settings</h3>
+            <p>
+                To connect the application to your Azure AI Foundry models, update the app settings file with the model connection information in the following format:
+            </p>
+            <pre>
+<code>
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AzureAIModels": [
+    {
+      "Name": "&lt;Model_Name&gt;",
+      "Endpoint": "&lt;Model_Endpoint_URL&gt;",
+      "ApiKey": "&lt;API_Key&gt;"
+    },
+    {
+      "Name": "&lt;Another_Model_Name&gt;",
+      "Endpoint": "&lt;Another_Model_Endpoint_URL&gt;",
+      "ApiKey": "&lt;Another_API_Key&gt;"
+    }
+  ]
+}
+</code>
+            </pre>
+            <p>
+                Replace <code>&lt;Model_Name&gt;</code>, <code>&lt;Model_Endpoint_URL&gt;</code>, and <code>&lt;API_Key&gt;</code> with your specific model details from the Azure AI Foundry portal.
+                <strong>Note:</strong> Ensure that the API keys and endpoints are kept secure.
+            </p>
+
+            <h3>Setting the System Prompt</h3>
+            <p>
+                You can configure a <strong>System Prompt</strong> to guide the behavior of the AI models. Use the <strong>Set System Prompt</strong> option in the menu to define a prompt that will apply globally to your interactions with the models.
+            </p>
+
+            <h3>Messaging Features</h3>
+            <ul>
+                <li>
+                    <strong>Global Messaging:</strong> Send a message to both models simultaneously using the <strong>Global Message</strong> area at the bottom of the screen.
+                </li>
+                <li>
+                    <strong>Individual Messaging:</strong> Send messages to a specific model using the dedicated input box for each side.
+                </li>
+            </ul>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-primary" @onclick="Close">Close</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+}

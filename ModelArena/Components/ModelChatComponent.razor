@@ -1,52 +1,58 @@
 ﻿@inject ModelSessionServiceFactory Factory
+@using Markdig;
 
 <div class="model-chat">
-<div class="header">
-    <label for="@($"{Id}-model-select")" class="model-label">Select Model:</label>
-    <select id="@($"{Id}-model-select")" @onchange="OnModelSelected" class="model-select">
-        <option value="">-- Select a Model --</option>
-        @foreach (var modelName in _availableModels)
-        {
-            <option value="@modelName">@modelName</option>
-        }
-    </select>
-</div>
-
-@if (_sessionService is not null)
-{
-    <div class="chat-history-container">
-        <h5>Chat History</h5>
-        <div class="chat-history">
-            @if (_messageHistory.Count > 0)
+    <div class="header">
+        <label for="@($"{Id}-model-select")" class="model-label">Select Model:</label>
+        <select id="@($"{Id}-model-select")" @onchange="OnModelSelected" class="model-select">
+            <option value="">-- Select a Model --</option>
+            @foreach (var modelName in _availableModels)
             {
-                @foreach (var message in _messageHistory)
-                {
-                    <div>@message</div>
-                }
+                <option value="@modelName">@modelName</option>
             }
-            else
-            {
-                <p class="text-muted">No messages yet.</p>
-            }
-        </div>
+        </select>
     </div>
 
-    <ChatInput SendMessage="SendToModel" ClearHistory="ClearModelHistory" />
-}
-else
-{
-    <p class="text-muted">Select a model to start chatting.</p>
-}
+    @if (_sessionService is not null)
+    {
+        <div class="chat-history-container">
+            <h5>Chat History</h5>
+            <div id="@($"{Id}-chat-history")" class="chat-history">
+                @if (_messageHistory.Count > 0)
+                {
+                    @foreach (var message in _messageHistory)
+                    {
+                        var messageClass = message.StartsWith("**You:**") ? "user-message" : "model-message";
+                        <div class="chat-message @messageClass fade-in">
+                            @((MarkupString)RenderMarkdown(message))
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted">No messages yet.</p>
+                }
+            </div>
+        </div>
+
+        <ChatInput SendMessage="SendToModel" ClearHistory="ClearModelHistory" />
+    }
+    else
+    {
+        <p class="text-muted">Select a model to start chatting.</p>
+    }
 </div>
 
 @code {
+    [Inject] private IJSRuntime? JsRuntime { get; set; }
+    [Parameter] public EventCallback<string> OnModelChanged { get; set; }
     [Parameter] public string Id { get; set; } = Guid.NewGuid().ToString();
-
-    // Add the [Parameter] attribute to make AvailableModels a bindable parameter
-    [Parameter] public IList<string> AvailableModels { get; set; } = [];
+    [Parameter] public IList<string> AvailableModels { get; set; } = new List<string>();
 
     private ModelSessionService? _sessionService;
-    private List<string> _messageHistory = [];
+    private List<string> _messageHistory = new();
+
+    private IList<string> _availableModels = new List<string>();
 
     protected override void OnInitialized()
     {
@@ -56,46 +62,85 @@ else
     private void OnModelSelected(ChangeEventArgs e)
     {
         var selectedModelName = e.Value?.ToString();
-        if (!string.IsNullOrEmpty(selectedModelName))
-        {
-            // Create a new ModelSessionService for the selected model
-            _sessionService = Factory.Create(selectedModelName);
-            _messageHistory.Clear();
-        }
+
+        if (string.IsNullOrEmpty(selectedModelName)) 
+            return;
+
+        _sessionService = Factory.Create(selectedModelName);
+        _messageHistory.Clear(); // Clear history when switching models
+
+        // Trigger the event callback with the selected model name
+        OnModelChanged.InvokeAsync(selectedModelName);
     }
 
-    private void ClearModelHistory()
+    public void ClearModelHistory()
     {
         _messageHistory.Clear();
         _sessionService?.ClearHistory();
     }
 
-    private async Task SendToModel(string message)
+    public void SetSystemPrompt(string systemPrompt)
+    {
+        _sessionService?.SetSystemPrompt(systemPrompt);
+    }
+
+    private static readonly MarkdownPipeline MarkdownPipeline = new MarkdownPipelineBuilder()
+        .UseAdvancedExtensions()
+        .Build();
+
+    private string RenderMarkdown(string markdown)
+    {
+        // Build the Markdown pipeline with the custom Prism extension
+        var pipeline = new MarkdownPipelineBuilder()
+            .UseAdvancedExtensions() // Add advanced Markdown features like tables and lists
+            .Use(new PrismSyntaxHighlightingExtension()) // Register the custom extension
+            .Build(); // Build the pipeline
+
+        // Convert Markdown to HTML using the pipeline
+        return Markdown.ToHtml(markdown, pipeline);
+    }
+
+
+
+    public async Task SendToModel(string message)
     {
         if (_sessionService is null) 
             return;
 
         // Add the user message to the history
-        _messageHistory.Add($"You: {message}");
+        _messageHistory.Add($"**You:** {message}"); // Markdown for bold "You"
         _sessionService.AddUserMessage(message);
 
         // Request a streaming response from the model
         await foreach (var responsePart in _sessionService.GetStreamingResponseAsync())
         {
-            // Update the chat history with the response as it streams
-            if (_messageHistory.LastOrDefault()?.StartsWith("Model:") == true)
+            if (_messageHistory.LastOrDefault()?.StartsWith("**Model:**") == true)
             {
                 _messageHistory[^1] += responsePart;
             }
             else
             {
-                _messageHistory.Add($"Model: {responsePart}");
+                _messageHistory.Add("**Model:**" + Environment.NewLine + responsePart);
             }
-
-            // Trigger UI updates
+            
             StateHasChanged();
+            await HighlightCodeAsync();
+            await ScrollToBottomAsync();
         }
     }
 
-    private IList<string> _availableModels = new List<string>();
+    private async Task ScrollToBottomAsync()
+    {
+        if (JsRuntime != null) 
+            await JsRuntime.InvokeVoidAsync("scrollToBottom", $"{Id}-chat-history");
+    }
+
+    
+
+    private async Task HighlightCodeAsync()
+    {
+        if (JsRuntime != null) 
+            await JsRuntime.InvokeVoidAsync("highlightCode");
+    }
+
 }

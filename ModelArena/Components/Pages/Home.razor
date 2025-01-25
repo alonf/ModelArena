@@ -2,15 +2,46 @@
 @inject AzureAIModelManager ModelManager
 
 <div class="container">
-    <h1>Model Arena</h1>
+    <div class="main-header">
+        <h1>Model Arena</h1>
+        <div class="menu">
+            <button @onclick="ToggleMenu" class="menu-button">☰</button>
+            <div class="menu-content @( _isMenuOpen ? "show" : "")">
+                <button @onclick="OpenSetSystemPrompt">Set System Prompt</button>
+                <button @onclick="OpenAbout">About</button>
+            </div>
+        </div>
+    </div>
+
+    @if (_isMenuOpen)
+    {
+        <div @onclick="CloseMenu" class="outside-click-detect"></div>
+    }
+
+    <!-- About Modal -->
+    @if (_isAboutModalVisible)
+    {
+        <AboutModal OnClose="CloseAboutModal" />
+    }
+
+    <!-- System Prompt Modal -->
+    @if (_isSystemPromptModalVisible)
+    {
+        <SystemPromptModal CurrentSystemPrompt="@_systemPrompt"
+                           OnSet="HandleSaveSystemPrompt"
+                           OnCancel="CloseSystemPromptModal" />
+    }
+
 
     <!-- Two model chat components -->
     <div class="row chat-container">
         <div class="col chat-box">
-            <ModelChatComponent Id="model1" AvailableModels="_availableModels" />
+            <ModelChatComponent @ref="_model1" Id="model1" AvailableModels="_availableModels" 
+                                OnModelChanged="HandleModelChanged"/>
         </div>
         <div class="col chat-box">
-            <ModelChatComponent Id="model2" AvailableModels="_availableModels" />
+            <ModelChatComponent @ref="_model2" Id="model2" AvailableModels="_availableModels" 
+                                OnModelChanged="HandleModelChanged" />
         </div>
     </div>
 
@@ -22,6 +53,16 @@
 
 @code {
     private IList<string> _availableModels = [];
+    private ModelChatComponent? _model1; // Reference to the first ModelChatComponent
+    private ModelChatComponent? _model2; // Reference to the second ModelChatComponent
+    private bool _isMenuOpen;
+    private bool _isAboutModalVisible;
+    private bool _isSystemPromptModalVisible;
+
+    private const string DefaultSystemPrompt = "You are an AI assistant that provides information";
+    private string _systemPrompt = DefaultSystemPrompt;
+
+    private void ToggleMenu() => _isMenuOpen = !_isMenuOpen;
 
     protected override void OnInitialized()
     {
@@ -30,12 +71,83 @@
 
     private async Task SendToAllModels(string message)
     {
-        // Logic to broadcast the message to both model components
-        // E.g., call methods in the two ModelChatComponent instances
+        if (_model1 is not null)
+        {
+            await _model1.SendToModel(message);
+        }
+
+        if (_model2 is not null)
+        {
+            await _model2.SendToModel(message);
+        }
     }
 
-    private async Task ClearAllHistories()
+    private void ClearAllHistories()
     {
-        // Logic to clear histories of both model components
+        _model1?.ClearModelHistory();
+        _model2?.ClearModelHistory();
+    }
+
+    private void CloseMenu()
+    {
+        _isMenuOpen = false;
+    }
+
+    private void HandleModelChanged(string modelName)
+    {
+        if (string.IsNullOrEmpty(_systemPrompt))
+            _systemPrompt = DefaultSystemPrompt;
+
+        // Update the system prompt for both models
+        if (_model1?.Id == modelName)
+        {
+            _model1?.SetSystemPrompt(_systemPrompt);
+        }
+
+        if (_model2?.Id == modelName)
+        {
+            _model2?.SetSystemPrompt(_systemPrompt);
+        }
+
+        Console.WriteLine($"System Prompt updated for model: {modelName}");
+    }
+
+    private void SetSystemPromptForAllModels()
+    {
+        // Call SetSystemPrompt on each model component
+        _model1?.SetSystemPrompt(_systemPrompt);
+        _model2?.SetSystemPrompt(_systemPrompt);
+
+        Console.WriteLine($"System Prompt Set: {_systemPrompt}");
+    }
+
+    private void OpenSetSystemPrompt()
+    {
+        _isSystemPromptModalVisible = true;
+        CloseMenu();
+    }
+
+    private void CloseSystemPromptModal()
+    {
+        _isSystemPromptModalVisible = false;
+    }
+
+    private void HandleSaveSystemPrompt(string prompt)
+    {
+        _systemPrompt = prompt;
+        Console.WriteLine($"System Prompt Set: {_systemPrompt}");
+        SetSystemPromptForAllModels();
+        CloseSystemPromptModal();
+    }
+
+    private void OpenAbout()
+    {
+        CloseMenu();
+        _isAboutModalVisible = true;
+    }
+
+    private void CloseAboutModal()
+    {
+        _isAboutModalVisible = false;
     }
 }

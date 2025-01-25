@@ -1,0 +1,33 @@
+﻿<div class="burger-menu">
+    <button @onclick="ToggleMenu">☰</button>
+    <div class="menu-content" style="display: @(_isMenuOpen ? "block" : "none")">
+        <ul>
+            <li @onclick="SetSystemPrompt">Set System Prompt</li>
+            <li @onclick="ShowAbout">About</li>
+        </ul>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnSetSystemPrompt { get; set; }
+    [Parameter] public EventCallback OnShowAbout { get; set; }
+
+    private bool _isMenuOpen;
+
+    private void ToggleMenu()
+    {
+        _isMenuOpen = !_isMenuOpen;
+    }
+
+    private async Task SetSystemPrompt()
+    {
+        await OnSetSystemPrompt.InvokeAsync();
+        _isMenuOpen = false;
+    }
+
+    private async Task ShowAbout()
+    {
+        await OnShowAbout.InvokeAsync();
+        _isMenuOpen = false;
+    }
+}

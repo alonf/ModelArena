@@ -1,0 +1,53 @@
+﻿<div class="modal-overlay">
+    <div class="modal">
+        <h2>Set System Prompt</h2>
+        
+        <!-- Textarea pre-filled with the current system prompt -->
+        <textarea class="system-prompt-input" @bind="_currentPrompt" placeholder="Enter system prompt..."></textarea>
+        
+        <!-- Buttons -->
+        <div class="modal-actions">
+            <button class="btn btn-primary" @onclick="Save">Set</button>
+            <button class="btn btn-secondary" @onclick="Clear">Clear</button>
+            <button class="btn btn-secondary" @onclick="Undo">Undo</button>
+            <button class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string CurrentSystemPrompt { get; set; } = string.Empty; // Current system prompt
+    [Parameter] public EventCallback<string> OnSet { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string _currentPrompt = string.Empty;
+    private string _originalPrompt = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        // Initialize the textarea with the current prompt passed from the parent
+        _currentPrompt = CurrentSystemPrompt;
+        _originalPrompt = CurrentSystemPrompt;
+    }
+
+    private async Task Save()
+    {
+        await OnSet.InvokeAsync(_currentPrompt); // Send the updated prompt back
+    }
+
+    private void Clear()
+    {
+        _currentPrompt = string.Empty; // Clear the textarea
+    }
+
+    private void Undo()
+    {
+        _currentPrompt = _originalPrompt; // Revert to the original prompt
+    }
+
+    private async Task Cancel()
+    {
+        _currentPrompt = _originalPrompt; // Revert to the original prompt
+        await OnCancel.InvokeAsync(); // Notify the parent about the cancellation
+    }
+}

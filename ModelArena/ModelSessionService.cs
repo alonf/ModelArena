@@ -18,6 +18,9 @@ public class ModelSessionService
 
     public void SetSystemPrompt(string systemPrompt)
     {
+        systemPrompt += Environment.NewLine +
+                        "Use markdown in your answers. You can use md tables and code blocks when applicable.";
+
         // Remove the existing system message if present
         if (_messageHistory.FirstOrDefault() is ChatRequestSystemMessage)
         {
