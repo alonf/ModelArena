@@ -1,0 +1,27 @@
+﻿<div class="chat-input">
+    <div class="input-container">
+        <textarea @bind="UserInput" placeholder="Enter your message..." class="input-box"></textarea>
+        <button class="btn btn-primary" @onclick="OnSend">Send</button>
+        <button class="btn btn-secondary" @onclick="OnClearHistory">Clear History</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> SendMessage { get; set; }
+    [Parameter] public EventCallback ClearHistory { get; set; }
+    private string UserInput { get; set; } = string.Empty;
+
+    private async Task OnSend()
+    {
+        if (!string.IsNullOrWhiteSpace(UserInput))
+        {
+            await SendMessage.InvokeAsync(UserInput);
+            UserInput = string.Empty; // Clear input after sending
+        }
+    }
+
+    private async Task OnClearHistory()
+    {
+        await ClearHistory.InvokeAsync();
+    }
+}

@@ -1,0 +1,19 @@
+﻿<div class="global-chat">
+    <h3>Global Prompt</h3>
+    <ChatInput SendMessage="SendToBothModels" ClearHistory="ClearAllHistories" />
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> BroadcastMessage { get; set; }
+    [Parameter] public EventCallback ClearAll { get; set; }
+
+    private async Task SendToBothModels(string message)
+    {
+        await BroadcastMessage.InvokeAsync(message);
+    }
+
+    private async Task ClearAllHistories()
+    {
+        await ClearAll.InvokeAsync();
+    }
+}

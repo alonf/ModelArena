@@ -1,0 +1,41 @@
+﻿@page "/"
+@inject AzureAIModelManager ModelManager
+
+<div class="container">
+    <h1>Model Arena</h1>
+
+    <!-- Two model chat components -->
+    <div class="row chat-container">
+        <div class="col chat-box">
+            <ModelChatComponent Id="model1" AvailableModels="_availableModels" />
+        </div>
+        <div class="col chat-box">
+            <ModelChatComponent Id="model2" AvailableModels="_availableModels" />
+        </div>
+    </div>
+
+    <!-- Global chat input -->
+    <div class="mt-4">
+        <GlobalChatComponent BroadcastMessage="SendToAllModels" ClearAll="ClearAllHistories" />
+    </div>
+</div>
+
+@code {
+    private IList<string> _availableModels = [];
+
+    protected override void OnInitialized()
+    {
+        _availableModels = ModelManager.GetModelNames();
+    }
+
+    private async Task SendToAllModels(string message)
+    {
+        // Logic to broadcast the message to both model components
+        // E.g., call methods in the two ModelChatComponent instances
+    }
+
+    private async Task ClearAllHistories()
+    {
+        // Logic to clear histories of both model components
+    }
+}

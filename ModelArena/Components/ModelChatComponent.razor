@@ -1,0 +1,101 @@
+﻿@inject ModelSessionServiceFactory Factory
+
+<div class="model-chat">
+<div class="header">
+    <label for="@($"{Id}-model-select")" class="model-label">Select Model:</label>
+    <select id="@($"{Id}-model-select")" @onchange="OnModelSelected" class="model-select">
+        <option value="">-- Select a Model --</option>
+        @foreach (var modelName in _availableModels)
+        {
+            <option value="@modelName">@modelName</option>
+        }
+    </select>
+</div>
+
+@if (_sessionService is not null)
+{
+    <div class="chat-history-container">
+        <h5>Chat History</h5>
+        <div class="chat-history">
+            @if (_messageHistory.Count > 0)
+            {
+                @foreach (var message in _messageHistory)
+                {
+                    <div>@message</div>
+                }
+            }
+            else
+            {
+                <p class="text-muted">No messages yet.</p>
+            }
+        </div>
+    </div>
+
+    <ChatInput SendMessage="SendToModel" ClearHistory="ClearModelHistory" />
+}
+else
+{
+    <p class="text-muted">Select a model to start chatting.</p>
+}
+</div>
+
+@code {
+    [Parameter] public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    // Add the [Parameter] attribute to make AvailableModels a bindable parameter
+    [Parameter] public IList<string> AvailableModels { get; set; } = [];
+
+    private ModelSessionService? _sessionService;
+    private List<string> _messageHistory = [];
+
+    protected override void OnInitialized()
+    {
+        _availableModels = AvailableModels;
+    }
+
+    private void OnModelSelected(ChangeEventArgs e)
+    {
+        var selectedModelName = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(selectedModelName))
+        {
+            // Create a new ModelSessionService for the selected model
+            _sessionService = Factory.Create(selectedModelName);
+            _messageHistory.Clear();
+        }
+    }
+
+    private void ClearModelHistory()
+    {
+        _messageHistory.Clear();
+        _sessionService?.ClearHistory();
+    }
+
+    private async Task SendToModel(string message)
+    {
+        if (_sessionService is null) 
+            return;
+
+        // Add the user message to the history
+        _messageHistory.Add($"You: {message}");
+        _sessionService.AddUserMessage(message);
+
+        // Request a streaming response from the model
+        await foreach (var responsePart in _sessionService.GetStreamingResponseAsync())
+        {
+            // Update the chat history with the response as it streams
+            if (_messageHistory.LastOrDefault()?.StartsWith("Model:") == true)
+            {
+                _messageHistory[^1] += responsePart;
+            }
+            else
+            {
+                _messageHistory.Add($"Model: {responsePart}");
+            }
+
+            // Trigger UI updates
+            StateHasChanged();
+        }
+    }
+
+    private IList<string> _availableModels = new List<string>();
+}
